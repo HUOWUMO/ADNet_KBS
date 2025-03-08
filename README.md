@@ -48,18 +48,12 @@ datasets
     └── Dioni_gt_out68.mat
     ├── Loukia.mat
     └── Loukia_gt_out68.mat
-└── GF14
-    ├── GF14-C16.mat
-    └── GF14-C16_gt.mat
-    ├── GF14-C17.mat
-    └── C17_gt_align.mat
-    └── GF14-C17_gt.mat
 
 ```
 
 ## Usage
 
-1.You can download [Houston ; Pavia ; HyRANK  ; GF14](https://drive.google.com/drive/folders/1No-DNDT9P1HKsM9QKKJJzat8A1ZhVmmz?usp=sharing) dataset here.
+1.You can download [Houston; Pavia; HyRANK](https://drive.google.com/drive/folders/1No-DNDT9P1HKsM9QKKJJzat8A1ZhVmmz?usp=sharing) dataset here.
 
 2.You can change the `source_name` and `target_name` in train.py to set different transfer tasks.
 
@@ -67,10 +61,15 @@ datasets
 
 Houston dataset:
 ```
-python train.py --data_path ./datasets/Houston/ --source_name Houston13 --target_name Houston18 --re_ratio 5 --dim1 128 --dim2 8 --flip_augmentation --radiation_augmentation
+python train.py --data_path ./datasets/Houston/ --source_name Houston13 --target_name Houston18 --re_ratio 5 --max_epoch 200 --log_interval 20 --dim 512 --lambda_1 1 --lambda_2 1 --training_sample_ratio 0.8 --dim1 128 --dim2 128 --flip_augmentation --radiation_augmentation --seed 888
 ```
 Pavia dataset:
 ```
-python train.py --data_path ./datasets/Pavia/ --source_name paviaU --target_name paviaC --re_ratio 1 --dim1 8 --dim2 16 --flip_augmentation --radiation_augmentation
+python train.py --data_path ./datasets/Pavia/ --source_name paviaU --target_name paviaC --re_ratio 1 --max_epoch 50 --log_interval 5 --dim 512  --lambda_1 1 --lambda_2 1 --dim1 128 --dim2 128 --training_sample_ratio 0.8 --seed 1
 ```
+HyRANK dataset:
+```
+python train4.py --data_path ./datasets/HyRANK/ --source_name Dioni --target_name Loukia --re_ratio 1 --max_epoch 50 --log_interval 5 --dim 512 --dim1 128 --dim2 128 --training_sample_ratio 0.8 --seed 1
+```
+
 
