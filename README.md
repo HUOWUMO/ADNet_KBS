@@ -59,7 +59,7 @@ datasets
 
 ## Usage
 
-1.You can download [Houston &amp; Pavia &amp ; HyRANK &amp ; GF14  ](https://drive.google.com/drive/folders/1No-DNDT9P1HKsM9QKKJJzat8A1ZhVmmz?usp=sharing) dataset here.
+1.You can download [Houston ; Pavia ; HyRANK  ; GF14](https://drive.google.com/drive/folders/1No-DNDT9P1HKsM9QKKJJzat8A1ZhVmmz?usp=sharing) dataset here.
 
 2.You can change the `source_name` and `target_name` in train.py to set different transfer tasks.
 
