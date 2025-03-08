@@ -69,7 +69,7 @@ python train.py --data_path ./datasets/Pavia/ --source_name paviaU --target_name
 ```
 HyRANK dataset:
 ```
-python train4.py --data_path ./datasets/HyRANK/ --source_name Dioni --target_name Loukia --re_ratio 1 --max_epoch 50 --log_interval 5 --dim 512 --dim1 128 --dim2 128 --training_sample_ratio 0.8 --seed 1
+python train.py --data_path ./datasets/HyRANK/ --source_name Dioni --target_name Loukia --re_ratio 1 --max_epoch 50 --log_interval 5 --dim 512 --dim1 128 --dim2 128 --training_sample_ratio 0.8 --seed 1
 ```
 
 
