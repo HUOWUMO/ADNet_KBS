@@ -43,12 +43,23 @@ datasets
     └── paviaC_7gt.mat
     ├── paviaU.mat
     └── paviaU_7gt.mat
+└── HyRANK
+    ├── Dioni.mat
+    └── Dioni_gt_out68.mat
+    ├── Loukia.mat
+    └── Loukia_gt_out68.mat
+└── GF14
+    ├── GF14-C16.mat
+    └── GF14-C16_gt.mat
+    ├── GF14-C17.mat
+    └── C17_gt_align.mat
+    └── GF14-C17_gt.mat
 
 ```
 
 ## Usage
 
-1.You can download [Houston &amp; Pavia](https://drive.google.com/drive/folders/1No-DNDT9P1HKsM9QKKJJzat8A1ZhVmmz?usp=sharing) dataset here.
+1.You can download [Houston &amp; Pavia &amp ; HyRANK &amp ; GF14  ](https://drive.google.com/drive/folders/1No-DNDT9P1HKsM9QKKJJzat8A1ZhVmmz?usp=sharing) dataset here.
 
 2.You can change the `source_name` and `target_name` in train.py to set different transfer tasks.
 
