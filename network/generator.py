@@ -5,37 +5,12 @@ from .discriminator import *
 import cv2
 from mtutils import min_max_normalize
 import random
-from .morph_layers2D_torch import *
-from network.style_hallucination import StyleHallucination
 
 from timm.layers import DropPath, to_2tuple, trunc_normal_
 import torch.fft
 import random
 from math import sqrt
 import numpy as np
-
-
-class MorphNet(nn.Module):
-    def __init__(self, inchannel):
-        super(MorphNet, self).__init__()
-        num = 1
-        kernel_size = 3
-        self.conv1 = nn.Conv2d(inchannel, num, kernel_size=1, stride=1, padding=0)
-        self.mp = nn.MaxPool2d(2)
-        self.Erosion2d_1 = Erosion2d(num, num, kernel_size, soft_max=False)
-        self.Dilation2d_1 = Dilation2d(num, num, kernel_size, soft_max=False)
-        self.Erosion2d_2 = Erosion2d(num, num, kernel_size, soft_max=False)
-        self.Dilation2d_2 = Dilation2d(num, num, kernel_size, soft_max=False)
-
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        xop_2 = self.Dilation2d_1(self.Erosion2d_1(x))  # 带可学习偏置的形态学开闭运算
-        xcl_2 = self.Erosion2d_2(self.Dilation2d_2(x))
-        x_top = x - xop_2  # 残差连接，提前给出输入信息
-        x_blk = xcl_2 - x
-        x_morph = torch.cat((x_top, x_blk, xop_2, xcl_2), 1)
-        # https://blog.csdn.net/qq_41731861/article/details/123919662
-        return x_morph
 
 
 class SpeRandomization(nn.Module):
