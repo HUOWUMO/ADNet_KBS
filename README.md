@@ -39,10 +39,10 @@ datasets
 │   ├── Houston18.mat
 │   └── Houston18_7gt.mat
 └── Pavia
-    ├── paviaC.mat
-    └── paviaC_7gt.mat
-    ├── paviaU.mat
-    └── paviaU_7gt.mat
+│   ├── paviaC.mat
+│   └── paviaC_7gt.mat
+│   ├── paviaU.mat
+│   └── paviaU_7gt.mat
 └── HyRANK
     ├── Dioni.mat
     └── Dioni_gt_out68.mat
