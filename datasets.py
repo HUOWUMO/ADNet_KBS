@@ -12,7 +12,7 @@ import torch.utils
 import torch.utils.data
 from tqdm import tqdm
 from scipy import io
-# 总集见E:\BaiduSyncdisk\Hyperspectral Remote Sensing Scenes Processing\datasets
+
 try:
     # Python 3
     from urllib.request import urlretrieve
@@ -31,56 +31,14 @@ DATASETS_CONFIG = {
         'img': 'Houston18.mat',
         'gt': 'Houston18_7gt.mat',
     },
-    'Houston13_uint8': {
-        'ori_data': 'Houston13_uint8.mat',
-        'gt': 'Houston13_7gt.mat',
-    },
-    'Houston18_uint8': {
-        'ori_data': 'Houston18_uint8.mat',
-        'gt': 'Houston18_7gt.mat',
-    },
-    'Houston13_uint8_intrR': {
-        'ori_data': 'Houston13_uint8_intrR.mat',
-        'gt': 'Houston13_7gt.mat',
-    },
-    'Houston18_uint8_intrR': {
-        'ori_data': 'Houston18_uint8_intrR.mat',
-        'gt': 'Houston18_7gt.mat',
-    },
-    'Houston13_con_smooth': {
-        'ori_data': 'Houston13_con_smooth.mat',
-        'gt': 'Houston13_gt_con_smooth.mat',
-    },
     'paviaU': {
         'img': 'paviaU.mat',
         'gt': 'paviaU_7gt.mat',
-    },
-    'paviaU_con_smooth': {
-        'img': 'PU_con_smooth.mat',
-        'gt': 'PU_gt_con_smooth.mat',
     },
     'paviaC': {
         'img': 'paviaC.mat',
         'gt': 'paviaC_7gt.mat',
     },
-    'paviaU_uint8': {
-        'ori_data': 'PU_unit8.mat',
-        'gt': 'paviaU_7gt.mat',
-    },
-    'paviaC_uint8': {
-        'ori_data': 'PC_uint8.mat',
-        'gt': 'paviaC_7gt.mat',
-    },
-
-    'paviaU_uint8_intrR': {
-        'ori_data': 'PU_unit8_intrR.mat',
-        'gt': 'paviaU_7gt.mat',
-    },
-    'paviaC_uint8_intrR': {
-        'ori_data': 'PC_uint8_intrR.mat',
-        'gt': 'paviaC_7gt.mat',
-    },
-
     'Dioni': {
         'img': 'Dioni.mat',
         'gt': 'Dioni_gt_out68.mat',
@@ -88,32 +46,6 @@ DATASETS_CONFIG = {
     'Loukia': {
         'img': 'Loukia.mat',
         'gt': 'Loukia_gt_out68.mat',
-    },
-    'SC-1': {
-        'img': 'SC-1.mat',
-        'gt': '1GT.mat',
-    },
-    'SC-3': {
-        'img': 'SC-3.mat',
-        'gt': '3GT.mat',
-    },
-
-    'GID_nc': {
-        'img': 'GID_nc.mat',
-        'gt': 'GID_nc_gt.mat',
-    },
-
-    'GID_wh': {
-        'img': 'GID_wh.mat',
-        'gt': 'GID_wh_gt.mat',
-    },
-    'HangZhou': {
-        'img': 'HangZhou.mat',
-        'gt': 'HangZhou_gt.mat',
-    },
-    'ShangHai': {
-        'img': 'ShangHai.mat',
-        'gt': 'ShangHai_gt.mat',
     },
     'C17': {
         'img': 'GF14-C17.mat',
@@ -208,60 +140,6 @@ def get_dataset(dataset_name, target_folder="./", datasets=DATASETS_CONFIG):
 
         ignored_labels = [0]
 
-    elif dataset_name == 'Houston13_uint8':
-        # Load the image
-        img = open_file(folder + 'Houston13_uint8.mat')['ori_data']
-        # Houston13_data = h5py.File('./datasets/Houston_rgb/Houston13_rgb.mat', 'r')
-        # img = np.transpose(Houston13_data['rgb'])
-
-        rgb_bands = [13, 20, 33]
-
-        Houston13_7gt_data = h5py.File('./datasets/Houston/Houston13_7gt.mat', 'r')  # 加载原版标签
-        gt = np.transpose(Houston13_7gt_data['map'])  # 加载原版标签
-
-        gt = np.int64(gt)
-
-        label_values = ["grass healthy", "grass stressed", "trees",
-                        "water", "residential buildings",
-                        "non-residential buildings", "road"]
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'Houston13_uint8_intrR':
-        # Load the image
-        img = open_file(folder + 'Houston13_intrR_uint8.mat')['ori_data']
-        # Houston13_data = h5py.File('./datasets/Houston_rgb/Houston13_rgb.mat', 'r')
-        # img = np.transpose(Houston13_data['rgb'])
-
-        rgb_bands = [13, 20, 33]
-
-        Houston13_7gt_data = h5py.File('./datasets/Houston/Houston13_7gt.mat', 'r')  # 加载原版标签
-        gt = np.transpose(Houston13_7gt_data['map'])  # 加载原版标签
-
-        gt = np.int64(gt)
-
-        label_values = ["grass healthy", "grass stressed", "trees",
-                        "water", "residential buildings",
-                        "non-residential buildings", "road"]
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'Houston13_con_smooth':
-        # Load the image
-        img = open_file(folder + 'Houston13_con_smooth.mat')['ori_data']
-        # Houston13_data = h5py.File('./datasets/Houston_rgb/Houston13_rgb.mat', 'r')
-        # img = np.transpose(Houston13_data['rgb'])
-
-        rgb_bands = [13, 20, 33]
-
-        gt = open_file(folder + 'Houston13_gt_con_smooth.mat')['map']  # 加载原版标签
-
-        label_values = ["grass healthy", "grass stressed", "trees",
-                        "water", "residential buildings",
-                        "non-residential buildings", "road"]
-
-        ignored_labels = [0]
-
     elif dataset_name == 'Houston18':
         # Load the image
         # img = open_file(folder + 'Houston18.mat')['ori_data']
@@ -281,43 +159,6 @@ def get_dataset(dataset_name, target_folder="./", datasets=DATASETS_CONFIG):
 
         ignored_labels = [0]
 
-    elif dataset_name == 'Houston18_uint8':
-        # Load the image
-        img = open_file(folder + 'Houston18_uint8.mat')['ori_data']
-        # Houston18_data = h5py.File('./datasets/Houston/Houston18.mat', 'r')
-        # img = np.transpose(Houston18_data['ori_data'])
-
-        rgb_bands = [13, 20, 33]
-
-        # gt = open_file(folder + 'Houston18_7gt.mat')['map']
-        Houston18_7gt_data = h5py.File('./datasets/Houston/Houston18_7gt.mat', 'r')
-        gt = np.transpose(Houston18_7gt_data['map'])
-        gt = np.int64(gt)
-
-        label_values = ["grass healthy", "grass stressed", "trees",
-                        "water", "residential buildings",
-                        "non-residential buildings", "road"]
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'Houston18_uint8_intrR':
-        # Load the image
-        img = open_file(folder + 'Houston18_intrR_uint8.mat')['ori_data']
-        # Houston18_data = h5py.File('./datasets/Houston/Houston18.mat', 'r')
-        # img = np.transpose(Houston18_data['ori_data'])
-
-        rgb_bands = [13, 20, 33]
-
-        # gt = open_file(folder + 'Houston18_7gt.mat')['map']
-        Houston18_7gt_data = h5py.File('./datasets/Houston/Houston18_7gt.mat', 'r')
-        gt = np.transpose(Houston18_7gt_data['map'])
-        gt = np.int64(gt)
-
-        label_values = ["grass healthy", "grass stressed", "trees",
-                        "water", "residential buildings",
-                        "non-residential buildings", "road"]
-
-        ignored_labels = [0]
 
     elif dataset_name == 'paviaU':
         # Load the image
@@ -334,80 +175,9 @@ def get_dataset(dataset_name, target_folder="./", datasets=DATASETS_CONFIG):
 
         ignored_labels = [0]
 
-    elif dataset_name == 'paviaU_con_smooth':
-        # Load the image
-        img = open_file(folder + 'PU_con_smooth.mat')['ori_data']
-
-        rgb_bands = [20, 30, 30]
-
-        # gt = open_file(folder + 'paviaU_7gt_FillUnlabeled.mat')['map']  # 加载未标记样本局部填充结果
-        # gt = open_file(folder + 'paviaU_7gt_PseudoLabel.mat')['map'] # 加载伪标签
-        gt = open_file(folder + 'PU_gt_con_smooth.mat')['map']  # 加载原版标签
-
-        label_values = ["tree", "asphalt", "brick",
-                        "bitumen", "shadow", 'meadow', 'bare soil']
-
-        ignored_labels = [0]
-
     elif dataset_name == 'paviaC':
         # Load the image
         img = open_file(folder + 'paviaC.mat')['ori_data']
-
-        rgb_bands = [20, 30, 30]
-
-        gt = open_file(folder + 'paviaC_7gt.mat')['map']
-
-        label_values = ["tree", "asphalt", "brick",
-                        "bitumen", "shadow", 'meadow', 'bare soil']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'paviaU_uint8':
-        # Load the image
-        img = open_file(folder + 'PU_uint8.mat')['ori_data']
-
-        rgb_bands = [20, 30, 30]
-
-        # gt = open_file(folder + 'paviaU_7gt_FillUnlabeled.mat')['map']  # 加载未标记样本局部填充结果
-        # gt = open_file(folder + 'paviaU_7gt_PseudoLabel.mat')['map'] # 加载伪标签
-        gt = open_file(folder + 'paviaU_7gt.mat')['map']  # 加载原版标签
-
-        label_values = ["tree", "asphalt", "brick",
-                        "bitumen", "shadow", 'meadow', 'bare soil']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'paviaC_uint8':
-        # Load the image
-        img = open_file(folder + 'PC_uint8.mat')['ori_data']
-
-        rgb_bands = [20, 30, 30]
-
-        gt = open_file(folder + 'paviaC_7gt.mat')['map']
-
-        label_values = ["tree", "asphalt", "brick",
-                        "bitumen", "shadow", 'meadow', 'bare soil']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'paviaU_uint8_intrR':
-        # Load the image
-        img = open_file(folder + 'PU_uint8_intrR.mat')['ori_data']
-
-        rgb_bands = [20, 30, 30]
-
-        # gt = open_file(folder + 'paviaU_7gt_FillUnlabeled.mat')['map']  # 加载未标记样本局部填充结果
-        # gt = open_file(folder + 'paviaU_7gt_PseudoLabel.mat')['map'] # 加载伪标签
-        gt = open_file(folder + 'paviaU_7gt.mat')['map']  # 加载原版标签
-
-        label_values = ["tree", "asphalt", "brick",
-                        "bitumen", "shadow", 'meadow', 'bare soil']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'paviaC_uint8_intrR':
-        # Load the image
-        img = open_file(folder + 'PC_uint8_intrR.mat')['ori_data']
 
         rgb_bands = [20, 30, 30]
 
@@ -445,87 +215,6 @@ def get_dataset(dataset_name, target_folder="./", datasets=DATASETS_CONFIG):
                         "Fruit Trees", "Olive Groves", 'Coniferous Forest', 'Dense Sderophyllous Vegetation',
                         'Sparce Sderophyllous Vegetation', 'Sparcely Vegetated Areas', 'Rocks and Sand', 'Water',
                         'Coastal Water']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'SC-1':
-        # Load the image
-        img = open_file(folder + 'SC-1.mat')['image']
-
-        rgb_bands = [20, 30, 30]
-
-        gt = open_file(folder + '1GT.mat')['GT']
-
-        label_values = ['1', '2', '3', '4', '5', '6']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'SC-3':
-        # Load the image
-        img = open_file(folder + 'SC-3.mat')['image']
-
-        rgb_bands = [20, 30, 30]
-
-        # gt = open_file(folder + '3GT.mat')['GT']
-        _3GT = h5py.File('./datasets/Qingdao/3GT.mat', 'r')
-        gt = np.transpose(_3GT['GT'])
-        gt = np.int64(gt)
-
-        label_values = ['1', '2', '3', '4', '5', '6']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'GID_nc':
-        # Load the image
-        _img = h5py.File('./datasets/GID/GID_nc.mat', 'r')  # 该数据集第四个通道全是255
-        img = np.transpose(_img['img'])
-
-        rgb_bands = [20, 30, 30]
-
-        _3GT = h5py.File('./datasets/GID/GID_nc_gt.mat', 'r')
-        gt = np.transpose(_3GT['GT'])
-        gt = np.int64(gt)
-
-        label_values = ['1', '2', '3', '4', '5']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'GID_wh':  # 该数据集第一个通道全是255，GID_wh 和 GID_nc 通道不匹配
-        # Load the image
-        _img = h5py.File('./datasets/GID/GID_wh.mat', 'r')
-        img = np.transpose(_img['img'])
-
-        rgb_bands = [20, 30, 30]
-
-        _3GT = h5py.File('./datasets/GID/GID_wh_gt.mat', 'r')
-        gt = np.transpose(_3GT['GT'])
-        gt = np.int64(gt)
-
-        label_values = ['1', '2', '3', '4', '5']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'HangZhou':
-        # Load the image
-        img = open_file(folder + 'HangZhou.mat')['DataCube2']
-
-        rgb_bands = [20, 30, 30]
-
-        gt = open_file(folder + 'HangZhou_gt.mat')['gt2']
-
-        label_values = ['1', '2', '3']
-
-        ignored_labels = [0]
-
-    elif dataset_name == 'ShangHai':
-        # Load the image
-        img = open_file(folder + 'ShangHai.mat')['DataCube1']
-
-        rgb_bands = [20, 30, 30]
-
-        gt = open_file(folder + 'ShangHai_gt.mat')['gt1']
-
-        label_values = ['1', '2', '3']
 
         ignored_labels = [0]
 
