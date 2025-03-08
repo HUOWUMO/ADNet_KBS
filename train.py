@@ -17,9 +17,8 @@ from datasets import get_dataset, HyperX
 from network import discriminator
 from network import generator
 from utils_HSI import sample_gt, metrics, seed_worker
-from unbalanced_loss.focal_loss import MultiFocalLoss
 
-parser = argparse.ArgumentParser(description='PyTorch SDEnet')
+parser = argparse.ArgumentParser(description='PyTorch ADNet')
 parser.add_argument('--save_path', type=str, default='./results/')
 parser.add_argument('--data_path', type=str, default='./datasets/Pavia/')
 
@@ -183,13 +182,11 @@ def experiment():
 
     # =================鉴别器模型配置=================
 
-    # 原版SDEnet(dim=512)+可调dim
     D_net = discriminator.Discriminator_AddDim(inchannel=N_BANDS, outchannel=args.pro_dim, dim=args.dim,
                                                num_classes=num_classes,
                                                patch_size=hyperparams['patch_size']).to(args.gpu)
     # =================生成器模型配置=================
 
-    # 双分支模拟本征分解和合成
     G_net = generator.Generator_double_branchV3_noLE(imdim=N_BANDS, imsize=imsize, device=args.gpu, dim1=args.dim1,
                                                      dim2=args.dim2).to(args.gpu)
     # =================模型LOSS与训练优化配置=================
@@ -197,23 +194,10 @@ def experiment():
     G_opt = optim.Adam(G_net.parameters(), lr=args.lr)
     cls_criterion = nn.CrossEntropyLoss()
     con_criterion = SupConLoss(device=args.gpu)
-    FocalLoss = MultiFocalLoss(num_class=num_classes, gamma=2.0, reduction='mean')  # FocalLoss针对不平衡类别
 
     MSE_loss = torch.nn.MSELoss(size_average=None, reduce=None,
                                 reduction='mean')  # 当reduction='mean’时，即返回一个batch中所有样本损失的均值,可以和batch size解耦
     MAE_loss = torch.nn.L1Loss(reduction='mean')
-
-    # FocalLoss = MultiFocalLoss(num_class=num_classes, alpha=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], gamma=2.0,reduction='mean')  # FocalLoss针对不平衡类别,alpha=None即默认全0.5
-    # FocalLoss = MultiFocalLoss(num_class=num_classes, alpha=[1, 1, 1, 1, 1, 1, 1], gamma=2.0, reduction='mean')  # FocalLoss针对不平衡类别,alpha=None即默认全0.5
-    # FocalLoss = MultiFocalLoss(num_class=num_classes, alpha=[1, 1, 1], gamma=2.0,reduction='mean')  # FocalLoss针对不平衡类别,alpha=None即默认全0.5
-
-    # ===================模型参数量统计=======================
-    # torchsummary.summary(D_net, (N_BANDS, hyperparams['patch_size'], hyperparams['patch_size']))  # 不用加batch size,给出详细的模型每层参数
-    # print('parameters_count:', count_parameters(D_net))
-
-    total_trainable_params_D = sum(p.numel() for p in D_net.parameters() if p.requires_grad)
-    total_trainable_params_G = sum(p.numel() for p in G_net.parameters() if p.requires_grad)
-    print(f'{(total_trainable_params_D + total_trainable_params_G) / (1024 * 1024):.2f}M training parameters.')
 
     # =================开始训练=================
     best_acc = 0
@@ -233,53 +217,12 @@ def experiment():
 
             x_r, x_s, x_ss, x_RD, x_tgt, f_r_v, f_s_v = G_net(x)
 
-            # ---------------------------------------------------
-            # 计算正交Loss，需要取绝对值防止-1来约束正交
-            # one = torch.ones(f_r_v.size(0)).to(args.gpu)
-            # latent_con = torch.abs(
-            #     torch.diag(torch.mm(F.normalize(f_r_v, dim=1), (F.normalize(f_s_v, dim=1)).T))) + torch.abs(
-            #     torch.norm(F.normalize(f_r_v, dim=1), dim=1) - one) + torch.abs(
-            #     torch.norm(F.normalize(f_s_v, dim=1), dim=1) - one)
-            #
-            # latent_con = sum(latent_con) / f_r_v.size(0)
-            # ----------------------------------------------------
-            # 计算相反Loss,最大化特征间余弦距离应该才是原文表达的意思（写错了，维度反了）
-            # 本质上是实现差异化的同构编码器的编码结果，是严格解耦的必要不充分条件
-            # one = torch.ones(f_r_v.size(0)).to(args.gpu)
-            # latent_con = torch.diag(torch.mm(F.normalize(f_r_v, dim=1), (F.normalize(f_s_v, dim=1)).T)) + torch.abs(
-            #     torch.norm(F.normalize(f_r_v, dim=1), dim=1) - one) + torch.abs(
-            #     torch.norm(F.normalize(f_s_v, dim=1), dim=1) - one)
-            #
-            # latent_con = sum(latent_con) / f_r_v.size(0)
-            # -----------------------------------------------------
-            # 中心化预处理
-            # f_r_v_mean = torch.mean(f_r_v, dim=0, keepdim=True)
-            # f_s_v_mean = torch.mean(f_s_v, dim=0, keepdim=True)
-            # f_r_v = f_r_v - f_r_v_mean
-            # f_s_v = f_s_v - f_s_v_mean
-
-            # 根据RV修正latent_con，计算成对编码向量的平均批余弦距离，相当于皮尔逊系数平方的平均，非严格的RV系数计算（latent_SumP)
             one = torch.ones((1, f_r_v.size(1))).to(args.gpu)
             latent_con = torch.diag(torch.mm(F.normalize(f_r_v, dim=0).T, F.normalize(f_s_v, dim=0))) + torch.abs(
                 torch.norm(F.normalize(f_r_v, dim=0), dim=0) - one) + torch.abs(
                 torch.norm(F.normalize(f_s_v, dim=0), dim=0) - one)
 
             latent_con = torch.sum(latent_con) / f_r_v.size(1)
-            # ----------------------------------------------------
-            # 计算RV系数作为loss latent_RV
-            # 中心化预处理
-            # f_r_v_mean = torch.mean(f_r_v, dim=0, keepdim=True)
-            # f_s_v_mean = torch.mean(f_s_v, dim=0, keepdim=True)
-            # f_r_v = f_r_v - f_r_v_mean
-            # f_s_v = f_s_v - f_s_v_mean
-
-            # s_f_r_v = torch.mm(f_r_v, f_r_v.T)
-            # s_f_s_v = torch.mm(f_s_v, f_s_v.T)
-            # latent_con = torch.trace(torch.mm(s_f_r_v.T, s_f_s_v)) / torch.sqrt(torch.trace(torch.mm(s_f_r_v.T, s_f_r_v)) * torch.trace(torch.mm(s_f_s_v.T, s_f_s_v)))
-
-            # 不给R_cls_loss鉴别器梯度
-            # with torch.no_grad():  # 将模型前向传播的代码放到with torch.no_grad()下，就能使pytorch不生成计算图，从而节省不少显存
-            #     p_R, z_R = D_net(x_r, mode='train')
 
             p_R, z_R = D_net(x_r, mode='train')
             p_SD, z_SD = D_net(x, mode='train')
@@ -292,12 +235,12 @@ def experiment():
             tgt_cls_loss = cls_criterion(p_tgt, y.long())  # 辅助损失
 
             R_cls_loss = cls_criterion(p_R, y.long())  # 期望R分量同类聚类
-            # R_cls_loss = FocalLoss(p_R, y.long())  # 期望R分量同类聚类,采用FocalLoss减小SD=PU下的类不平衡影响
+
 
             zall = torch.cat([z_tgt.unsqueeze(1), zsrc], dim=1)
             con_loss = con_criterion(zall, y, adv=False)
             loss1 = src_cls_loss + tgt_cls_loss + args.lambda_1 * con_loss
-            # loss1 = src_cls_loss + tgt_cls_loss  # no con
+
             D_opt.zero_grad()  # 先只优化D_net
             loss1.backward(retain_graph=True)  # 不释放计算图，对Loss2进行计算时，梯度是累加的
 
@@ -305,28 +248,21 @@ def experiment():
             zsrc_con = torch.cat([z_tgt.unsqueeze(1), z_ED.unsqueeze(1).detach(), z_ID.unsqueeze(1).detach()],
                                  dim=1)
             con_loss_adv = 0
-            idx_1 = np.random.randint(0, zsrc.size(1))  # 随机从三组伪域中选一组用于和真域对比
+            idx_1 = np.random.randint(0, zsrc.size(1))  
             for i, id in enumerate(y.unique()):  # 然后优化G_net
                 mask = y == y.unique()[i]
                 z_SD_i, zsrc_i = z_SD[mask], zsrc_con[mask]
                 y_i = torch.cat([torch.zeros(z_SD_i.shape[0]), torch.ones(z_SD_i.shape[0])])  # 打上新的真伪标签，真-0，伪-1
                 zall = torch.cat([z_SD_i.unsqueeze(1).detach(), zsrc_i[:, idx_1:idx_1 + 1]],
-                                 dim=0)  # 特别注意，该索引左闭右开，相当于取idx_1这一列
+                                 dim=0)  
                 if y_i.size()[0] > 2:
                     con_loss_adv += con_criterion(zall, y_i)
             con_loss_adv = con_loss_adv / y.unique().shape[0]  # 计算平均每个类别的真伪对比损失
-            # 这里的辅助损失约束生成参数，保证其生成的样本在正确的标签空间
 
-            # ==含义不同的Loss项还是加上对应的系数==
-
-            # 域扩展loss
             loss_expand = tgt_cls_loss + args.lambda_2 * con_loss_adv
-            # 解耦Loss
             loss_decom = MSE_loss(x, x_RD) + args.lambda_3 * latent_con + args.lambda_4 * R_cls_loss
 
             loss2 = loss_expand + loss_decom
-            # loss2 = tgt_cls_loss + R_cls_loss + MSE_loss(x, x_RD)  # no adv实验
-            # R_cls_loss虽然是中间结果的交叉熵，但前向传播从x开始，反向传播以x结束，R_cls_loss依旧会影响生成器优化
 
             G_opt.zero_grad()  # 清空G的梯度，保留了D的梯度，相当于前面的loss.backward(retain_graph=True)对G不起作用
             loss2.backward()
@@ -353,22 +289,13 @@ def experiment():
         t2 = time.time()
 
         # 在某些train_ratio下，loss会报错
-        print(
-            f'epoch {epoch}, train {len(train_loader.dataset)}, time {t2 - t1:.2f}, src_cls {src_cls_loss:.4f} tgt_cls {tgt_cls_loss:.4f} con {con_loss:.4f} con_adv {con_loss_adv:.4f} R_cls_loss {R_cls_loss:.4f} latent_con {latent_con:.4f} MSE {MSE:.4f}/// val {len(val_loader.dataset)}, teacc {teacc:2.2f}')
-        # print(f'epoch {epoch}, train {len(train_loader.dataset)}, time {t2 - t1:.2f}/// val {len(val_loader.dataset)}, teacc {teacc:2.2f}')
-
-        # writer.add_scalar('src_cls_loss', src_cls_loss, epoch)
-        # writer.add_scalar('tgt_cls_loss', tgt_cls_loss, epoch)
-        # writer.add_scalar('con_loss', con_loss, epoch)
-        # writer.add_scalar('con_loss_adv', con_loss_adv, epoch)
-        # writer.add_scalar('teacc', teacc, epoch)
+        print(f'epoch {epoch}, train {len(train_loader.dataset)}, time {t2 - t1:.2f}, src_cls {src_cls_loss:.4f} tgt_cls {tgt_cls_loss:.4f} con {con_loss:.4f} con_adv {con_loss_adv:.4f} R_cls_loss {R_cls_loss:.4f} latent_con {latent_con:.4f} MSE {MSE:.4f}/// val {len(val_loader.dataset)}, teacc {teacc:2.2f}')
 
         if epoch % args.log_interval == 0:
             pklpath = f'{log_dir}/best.pkl'
             taracc = evaluate_tgt(D_net, args.gpu, test_loader, pklpath)
             taracc_list.append(round(taracc, 2))
             print(f'load pth, target sample number {len(test_loader.dataset)}, max taracc {max(taracc_list):2.2f}')
-    # writer.close()
 
 
 if __name__ == '__main__':
